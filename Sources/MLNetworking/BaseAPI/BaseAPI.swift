@@ -9,7 +9,7 @@
 import Foundation
 import Alamofire
 
-struct ErrorMessage: Codable {
+public struct ErrorMessage: Codable {
     var errorCode: Int?
     var message: String?
     var httpStatus: Int?
@@ -26,8 +26,8 @@ enum ApiContentTypeEnum: String {
     case applicationJson = "application/json"
 }
 
-class BaseAPI: SessionDelegate {
-    static let shared = BaseAPI()
+open class BaseAPI: SessionDelegate {
+    public static let shared = BaseAPI()
     private var session: Session?
     let baseURL = "https://api.darksky.net/forecast/2bb07c3bece89caf533ac9a5d23d8417/"
     private init() {
@@ -41,7 +41,7 @@ class BaseAPI: SessionDelegate {
                           startRequestsImmediately: true)
     }
     
-    func request<S: Decodable, F: Decodable>(methotType: HTTPMethod,
+    public func request<S: Decodable, F: Decodable>(methotType: HTTPMethod,
                                              endPoint: String,
                                              params: ([String: Any])?,
                                              headerParams: ([String: String])? = nil,
