@@ -42,11 +42,11 @@ open class BaseAPI: SessionDelegate {
     }
     
     public func request<S: Decodable, F: Decodable>(methotType: HTTPMethod,
-                                             endPoint: String,
-                                             params: ([String: Any])?,
-                                             headerParams: ([String: String])? = nil,
-                                             succeed:@escaping (S) -> Void,
-                                             failed:@escaping (F) -> Void) {
+                                                    endPoint: String,
+                                                    params: ([String: Any])?,
+                                                    headerParams: ([String: String])? = nil,
+                                                    succeed:@escaping (S) -> Void,
+                                                    failed:@escaping (F) -> Void) {
 
         guard let session = session else { return }
         let contentType = ApiContentTypeEnum.applicationJson.rawValue
@@ -89,7 +89,7 @@ open class BaseAPI: SessionDelegate {
     private func handleJsonResponse<S: Decodable, F: Decodable>(dataRequest: DataRequest,
                                                                 succeed: @escaping (S) -> Void,
                                                                 failed: @escaping (F) -> Void) {
-        dataRequest.responseDecodable(of: F.self) { [weak self] response in
+        dataRequest.responseDecodable(of: S.self) { [weak self] response in
             guard let self = self else { return }
 
             self.printResponse(request: dataRequest, statusCode: response.response?.statusCode, url: response.request?.description)
@@ -112,11 +112,8 @@ open class BaseAPI: SessionDelegate {
 
     private func handleSuccessfulResponseObject<S: Decodable>(dataRequest: DataRequest,
                                                               succeed: @escaping (S) -> Void) {
-
         dataRequest.responseDecodable(of: S.self) { (response: DataResponse<S, AFError>) in
             if let responseObject = response.value {
-
-
                 succeed(responseObject)
             }
         }
