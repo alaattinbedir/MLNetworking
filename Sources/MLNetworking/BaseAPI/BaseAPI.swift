@@ -15,7 +15,6 @@ public struct ErrorMessage: Codable {
     var httpStatus: Int?
 
     enum CodingKeys: String, CodingKey {
-
         case errorCode = "errorCode"
         case message = "message"
         case httpStatus = "httpStatus"
@@ -47,7 +46,6 @@ open class BaseAPI: SessionDelegate {
                                                     headerParams: ([String: String])? = nil,
                                                     succeed:@escaping (S) -> Void,
                                                     failed:@escaping (F) -> Void) {
-
         guard let session = session else { return }
         let contentType = ApiContentTypeEnum.applicationJson.rawValue
 
@@ -148,16 +146,16 @@ open class BaseAPI: SessionDelegate {
 
     // MARK: Reachability for connection
 
-    public func networkIsReachable() -> Bool {
+    private func networkIsReachable() -> Bool {
         let networkManager = NetworkReachabilityManager()
         let result = networkManager?.isReachable
         return result ?? false
     }
 
-    func printRequest(url: String?,
-                      methodType: HTTPMethod?,
-                      body: ([String: Any])?,
-                      headerParams: [String: String]) {
+    private func printRequest(url: String?,
+                              methodType: HTTPMethod?,
+                              body: ([String: Any])?,
+                              headerParams: [String: String]) {
 
         let header = headerParams.reduce("\n   ") { $0 + $1.key + ":" + $1.value + "\n      " }
         print("""
@@ -183,6 +181,3 @@ open class BaseAPI: SessionDelegate {
         """)
     }
 }
-
-
-
