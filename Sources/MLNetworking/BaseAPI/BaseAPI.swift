@@ -46,7 +46,7 @@ open class BaseAPI: SessionDelegate {
     }
     
     public func request<S: Decodable, F: Decodable>(methotType: HTTPMethod,
-                                                    baseURL: String? = nil,
+                                                    baseURL: String,
                                                     endPoint: String,
                                                     params: ([String: Any])?,
                                                     contentType: String = MimeType.applicationJson.rawValue,
@@ -59,10 +59,6 @@ open class BaseAPI: SessionDelegate {
             if let myError = ErrorMessage(errorCode: 1001, message: NSLocalizedString("No Internet connection", comment: "comment")) as? F {
                 failed(myError)
             }
-            return
-        }
-
-        guard let baseURL = baseURL else {
             return
         }
 
