@@ -9,7 +9,7 @@
 import Foundation
 import Alamofire
 
-public struct ErrorMessage: Codable {
+public struct ErrorMessage: Decodable {
     var errorCode: Int?
     var message: String?
     var httpStatus: Int?
@@ -21,14 +21,19 @@ public struct ErrorMessage: Codable {
     }
 }
 
-enum ApiContentTypeEnum: String {
+public enum MimeType: String {
     case applicationJson = "application/json"
+    case textHtml = "text/html"
+    case applicationPdf = "application/pdf"
+    case formUrlEncoded = "application/x-www-form-urlencoded; charset=utf-8"
+    case imagePNG = "image/png"
+    case empty = ""
+    case base64ForHTML = "base64"
 }
 
 open class BaseAPI: SessionDelegate {
     public static let shared = BaseAPI()
     private var session: Session?
-    let baseURL = "https://api.darksky.net/forecast/2bb07c3bece89caf533ac9a5d23d8417/"
     private init() {
         super.init()
         // Create custom manager
@@ -41,18 +46,23 @@ open class BaseAPI: SessionDelegate {
     }
     
     public func request<S: Decodable, F: Decodable>(methotType: HTTPMethod,
+                                                    baseURL: String? = nil,
                                                     endPoint: String,
                                                     params: ([String: Any])?,
+                                                    contentType: String = MimeType.applicationJson.rawValue,
                                                     headerParams: ([String: String])? = nil,
                                                     succeed:@escaping (S) -> Void,
                                                     failed:@escaping (F) -> Void) {
         guard let session = session else { return }
-        let contentType = ApiContentTypeEnum.applicationJson.rawValue
 
         guard networkIsReachable() else {
             if let myError = ErrorMessage(errorCode: 1001, message: NSLocalizedString("No Internet connection", comment: "comment")) as? F {
                 failed(myError)
             }
+            return
+        }
+
+        guard let baseURL = baseURL else {
             return
         }
 
