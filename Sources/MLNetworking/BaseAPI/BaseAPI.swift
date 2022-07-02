@@ -10,9 +10,15 @@ import Foundation
 import Alamofire
 
 public struct ErrorMessage: Decodable {
-    var errorCode: Int?
-    var message: String?
-    var httpStatus: Int?
+    public var errorCode: Int?
+    public var message: String?
+    public var httpStatus: Int?
+
+    public init(errorCode: Int? = nil, message: String? = nil, httpStatus: Int? = nil) {
+        self.errorCode = errorCode
+        self.message = message
+        self.httpStatus = httpStatus
+    }
 
     enum CodingKeys: String, CodingKey {
         case errorCode = "errorCode"
@@ -56,7 +62,7 @@ open class BaseAPI: SessionDelegate {
         guard let session = session else { return }
 
         guard networkIsReachable() else {
-            if let myError = ErrorMessage(errorCode: 1001, message: NSLocalizedString("No Internet connection", comment: "comment")) as? F {
+            if let myError = ErrorMessage(errorCode: 1001, message: "No Internet connection") as? F {
                 failed(myError)
             }
             return
