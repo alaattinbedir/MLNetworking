@@ -62,7 +62,7 @@ open class BaseAPI: SessionDelegate {
         guard let session = session else { return }
 
         guard networkIsReachable() else {
-            if let myError = ErrorMessage(errorCode: 1001, message: "No Internet connection") as? F {
+            if let myError = ErrorMessage(errorCode: 1001, message: "Please check your internet connection.") as? F {
                 failed(myError)
             }
             return
