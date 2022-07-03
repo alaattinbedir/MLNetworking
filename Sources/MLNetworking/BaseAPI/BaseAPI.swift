@@ -11,17 +11,20 @@ import Alamofire
 
 public struct ErrorMessage: Decodable {
     public var errorCode: Int?
+    public var title: String?
     public var message: String?
     public var httpStatus: Int?
 
-    public init(errorCode: Int? = nil, message: String? = nil, httpStatus: Int? = nil) {
+    public init(errorCode: Int? = nil, title: String? = nil, message: String? = nil, httpStatus: Int? = nil) {
         self.errorCode = errorCode
+        self.title = title
         self.message = message
         self.httpStatus = httpStatus
     }
 
     enum CodingKeys: String, CodingKey {
         case errorCode = "errorCode"
+        case title = "title"
         case message = "message"
         case httpStatus = "httpStatus"
     }
@@ -62,8 +65,8 @@ open class BaseAPI: SessionDelegate {
         guard let session = session else { return }
 
         guard networkIsReachable() else {
-            if let myError = ErrorMessage(errorCode: 1001, message: "Please check your internet connection.") as? F {
-                failed(myError)
+            if let error = ErrorMessage(errorCode: 1001, title: "Warning", message: "Please check your internet connection.") as? F {
+                failed(error)
             }
             return
         }
@@ -114,8 +117,14 @@ open class BaseAPI: SessionDelegate {
                 default:
                     print("default")
                 }
-            case .failure(_):
-                self.handleFailureResponseObject(dataRequest: dataRequest, failed: failed)
+            case let .failure(error):
+                if let afError = error.asAFError {
+                    if let error = ErrorMessage(errorCode: 1002, title: "Warning", message: afError.localizedDescription) as? F {
+                        failed(error)
+                    }
+                } else {
+                    self.handleFailureResponseObject(dataRequest: dataRequest, failed: failed)
+                }
             }
         }
     }
