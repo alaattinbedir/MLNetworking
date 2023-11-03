@@ -10,20 +10,20 @@ import Foundation
 import Alamofire
 
 public struct ErrorMessage: Decodable {
-    public var errorCode: Int?
+    public var code: Int?
     public var title: String?
     public var message: String?
     public var httpStatus: Int?
 
-    public init(errorCode: Int? = nil, title: String? = nil, message: String? = nil, httpStatus: Int? = nil) {
-        self.errorCode = errorCode
+    public init(code: Int? = nil, title: String? = nil, message: String? = nil, httpStatus: Int? = nil) {
+        self.code = code
         self.title = title
         self.message = message
         self.httpStatus = httpStatus
     }
 
     enum CodingKeys: String, CodingKey {
-        case errorCode = "errorCode"
+        case code = "code"
         case title = "title"
         case message = "message"
         case httpStatus = "httpStatus"
@@ -40,14 +40,21 @@ public enum MimeType: String {
     case base64ForHTML = "base64"
 }
 
+public enum ErrorCode: Int {
+    case noConnectionError = 1001
+    case jsonParseError = 1002
+    case serviceRequestError = 1003
+}
+
 open class BaseAPI: SessionDelegate {
     public static let shared = BaseAPI()
     private var session: Session?
+    private let timeoutIntervalForRequest: Double = 300
     private init() {
         super.init()
         // Create custom manager
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 280
+        configuration.timeoutIntervalForRequest = timeoutIntervalForRequest
 
         session = Session(configuration: configuration,
                           delegate: self,
@@ -65,7 +72,9 @@ open class BaseAPI: SessionDelegate {
         guard let session = session else { return }
 
         guard networkIsReachable() else {
-            if let error = ErrorMessage(errorCode: 1001, title: "Warning", message: "Please check your internet connection.") as? F {
+            if let error = ErrorMessage(code: ErrorCode.noConnectionError.rawValue,
+                                        title: "Warning",
+                                        message: "Please check your internet connection.") as? F {
                 failed(error)
             }
             return
@@ -81,13 +90,21 @@ open class BaseAPI: SessionDelegate {
             }
         }
 
-        let headerParams = prepareHeaderForSession(endPoint, methotType, bodyParams, headerParams, contentType)
+        let headerParams = prepareHeaderForSession(endPoint,
+                                                   methotType,
+                                                   bodyParams,
+                                                   headerParams,
+                                                   contentType)
 
-        printRequest(url: url, methodType: methotType, body: bodyParams, headerParams: headerParams)
+        printRequest(url: url,
+                     methodType: methotType,
+                     body: bodyParams,
+                     headerParams: headerParams)
 
-        let networkRequest = session.request(url,
+        let networkRequest = session.request(url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)~,
                                              method: methotType,
                                              parameters: bodyParams,
+                                             encoding: JSONEncoding.default,
                                              headers: HTTPHeaders(headerParams))
             .validate(contentType: [contentType])
             .validate(statusCode: 200 ..< 600)
@@ -105,7 +122,9 @@ open class BaseAPI: SessionDelegate {
         dataRequest.responseDecodable(of: S.self) { [weak self] response in
             guard let self = self else { return }
 
-            self.printResponse(request: dataRequest, statusCode: response.response?.statusCode, url: response.request?.description)
+            self.printResponse(request: dataRequest,
+                               statusCode: response.response?.statusCode,
+                               url: response.request?.description)
             
             switch response.result {
             case .success:
@@ -119,7 +138,9 @@ open class BaseAPI: SessionDelegate {
                 }
             case let .failure(error):
                 if let afError = error.asAFError {
-                    if let error = ErrorMessage(errorCode: 1002, title: "Warning", message: afError.localizedDescription) as? F {
+                    if let error = ErrorMessage(code: ErrorCode.jsonParseError.rawValue,
+                                                title: "Warning",
+                                                message: afError.localizedDescription) as? F {
                         failed(error)
                     }
                 } else {
@@ -131,8 +152,10 @@ open class BaseAPI: SessionDelegate {
 
     private func handleSuccessfulResponseObject<S: Decodable>(dataRequest: DataRequest,
                                                               succeed: @escaping (S) -> Void) {
+        var isHandled = false
         dataRequest.responseDecodable(of: S.self) { (response: DataResponse<S, AFError>) in
-            if let responseObject = response.value {
+            if let responseObject = response.value, !isHandled {
+                isHandled = true
                 succeed(responseObject)
             }
         }
@@ -140,12 +163,22 @@ open class BaseAPI: SessionDelegate {
 
     private func handleFailureResponseObject<F: Decodable>(dataRequest: DataRequest,
                                                            failed: @escaping (F) -> Void) {
+        var isHandled = false
         dataRequest.responseDecodable(of: F.self) { (response: DataResponse<F, AFError>) in
-            if let responseObject = response.value {
-                if var errorMessage = responseObject as? ErrorMessage {
-                    errorMessage.httpStatus = response.response?.statusCode
+            if !isHandled {
+                isHandled = true
+                if let responseObject = response.value {
+                    if var errorMessage = responseObject as? ErrorMessage {
+                        errorMessage.httpStatus = response.response?.statusCode
+                    }
+                    failed(responseObject)
+                } else {
+                    if let errorMessage = ErrorMessage(code: ErrorCode.serviceRequestError.rawValue,
+                                                       title: "Warning",
+                                                       message: response.error?.errorDescription) as? F {
+                        failed(errorMessage)
+                    }
                 }
-                failed(responseObject)
             }
         }
     }
