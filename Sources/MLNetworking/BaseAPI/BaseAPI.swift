@@ -41,15 +41,22 @@ public enum MimeType: String {
 }
 
 public enum ErrorCode: Int {
-    case noConnectionError = 1001
-    case jsonParseError = 1002
-    case serviceRequestError = 1003
+    case unknownError
+    case connectionError
+    case invalidCredentials
+    case invalidRequest
+    case notFound
+    case invalidResponse
+    case serverError
+    case serverUnavailable
+    case timeOut
+    case unsuppotedURL
 }
 
 open class BaseAPI: SessionDelegate {
     public static let shared = BaseAPI()
     private var session: Session?
-    private let timeoutIntervalForRequest: Double = 300
+    private let timeoutIntervalForRequest: Double = 60
     private init() {
         super.init()
         // Create custom manager
@@ -72,7 +79,7 @@ open class BaseAPI: SessionDelegate {
         guard let session = session else { return }
 
         guard networkIsReachable() else {
-            if let error = ErrorMessage(code: ErrorCode.noConnectionError.rawValue,
+            if let error = ErrorMessage(code: ErrorCode.connectionError.rawValue,
                                         title: "Warning",
                                         message: "Please check your internet connection.") as? F {
                 failed(error)
@@ -101,7 +108,7 @@ open class BaseAPI: SessionDelegate {
                      body: bodyParams,
                      headerParams: headerParams)
 
-        let networkRequest = session.request(url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)~,
+        let networkRequest = session.request(url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)*,
                                              method: methotType,
                                              parameters: bodyParams,
                                              encoding: JSONEncoding.default,
@@ -138,7 +145,7 @@ open class BaseAPI: SessionDelegate {
                 }
             case let .failure(error):
                 if let afError = error.asAFError {
-                    if let error = ErrorMessage(code: ErrorCode.jsonParseError.rawValue,
+                    if let error = ErrorMessage(code: ErrorCode.serverError.rawValue,
                                                 title: "Warning",
                                                 message: afError.localizedDescription) as? F {
                         failed(error)
@@ -173,7 +180,7 @@ open class BaseAPI: SessionDelegate {
                     }
                     failed(responseObject)
                 } else {
-                    if let errorMessage = ErrorMessage(code: ErrorCode.serviceRequestError.rawValue,
+                    if let errorMessage = ErrorMessage(code: ErrorCode.invalidResponse.rawValue,
                                                        title: "Warning",
                                                        message: response.error?.errorDescription) as? F {
                         failed(errorMessage)

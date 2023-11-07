@@ -7,53 +7,53 @@
 
 import Foundation
 
-postfix operator ~
+postfix operator *
 
-postfix func ~ (_ val: Int?) -> Int {
+public postfix func * (_ val: Int?) -> Int {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: UInt?) -> UInt {
+public postfix func * (_ val: UInt?) -> UInt {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: Float?) -> Float {
+public postfix func * (_ val: Float?) -> Float {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: CGFloat?) -> CGFloat {
+public postfix func * (_ val: CGFloat?) -> CGFloat {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: Double?) -> Double {
+public postfix func * (_ val: Double?) -> Double {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: String?) -> String {
+public postfix func * (_ val: String?) -> String {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: Substring?) -> String {
+public postfix func * (_ val: Substring?) -> String {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: Bool?) -> Bool {
+public postfix func * (_ val: Bool?) -> Bool {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ (_ val: Date?) -> Date {
+public postfix func * (_ val: Date?) -> Date {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ <T>(_ val: [T]?) -> [T] {
+public postfix func * <T>(_ val: [T]?) -> [T] {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-postfix func ~ <T, U>(_ val: [T: U]?) -> [T: U] where T: Hashable {
+public postfix func * <T, U>(_ val: [T: U]?) -> [T: U] where T: Hashable {
     return SafeUnwrap().safeUnwrap(val)
 }
 
-class SafeUnwrap {
+open class SafeUnwrap {
     func safeUnwrap(_ integer: Int?, defaultValue: Int = 0) -> Int {
         return integer ?? defaultValue
     }
